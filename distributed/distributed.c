@@ -87,6 +87,12 @@
 #include "distributed/distributed.h"
 #include "distributed/merge.h"
 
+/* Aggregated slave statistic of a move. */
+struct large_stats {
+	long playouts; // # of playouts
+	floating_t value; // BLACK wins/playouts
+};
+
 /* Internal engine state. */
 struct distributed {
 	char *slave_port;
@@ -97,6 +103,7 @@ struct distributed {
 	bool slaves_quit;
 	struct move my_last_move;
 	struct move_stats my_last_stats;
+	struct large_stats my_last_stats_array[2 + BOARD_MAX_SIZE * BOARD_MAX_SIZE];
 	int slaves;
 	int threads;
 };
@@ -197,10 +204,6 @@ distributed_notify(struct engine *e, struct board *b, int id, char *cmd, char *a
 /* The playouts sent by slaves for the children of the root node
  * include contributions from other slaves. To avoid 32-bit overflow on
  * large configurations with many slaves we must average the playouts. */
-struct large_stats {
-	long playouts; // # of playouts
-	floating_t value; // BLACK wins/playouts
-};
 
 static void
 large_stats_add_result(struct large_stats *s, floating_t result, long playouts)
@@ -263,6 +266,7 @@ select_best_move(struct board *b, struct large_stats *stats, int *played,
 	}
 	for (coord_t c = resign; c < board_size2(b); c++)
 		stats[c].playouts /= reply_count;
+
 	*keep_looking = keep > reply_count / 2;
 	return best_move;
 }
@@ -317,8 +321,7 @@ distributed_genmove(struct engine *e, struct board *b, struct time_info *ti,
 
 	/* Combined move stats from all slaves, only for children
 	 * of the root node, plus 2 for pass and resign. */
-	struct large_stats stats_array[board_size2(b) + 2], *stats;
-	stats = &stats_array[2];
+	struct large_stats *stats = dist->my_last_stats_array + 2;
 
 	protocol_lock();
 	clear_receive_queue();
@@ -452,6 +455,35 @@ distributed_dead_group_list(struct engine *e, struct board *b, struct move_queue
 	protocol_unlock();
 }
 
+static char *
+move_statistics(struct engine *e, struct board *b){
+	/* For each intersection:
+	 * coordinate, "pass" or "resign") 6B, space 1B,
+	 * playouts (7 decimal places) 7B, space 1B
+	 * probability (4 decimal points) 6B, newline 1B,
+	 *
+	 * At the end:
+	 * 1B trailing zero */
+	static char reply[22 * (2 + BOARD_MAX_SIZE * BOARD_MAX_SIZE) + 1] = {0};
+
+	struct distributed *dist = e->data;
+	struct large_stats *stats = dist->my_last_stats_array + 2;
+
+	char *s = reply;
+	char *end = s + sizeof(reply);
+
+	for (coord_t c = resign; c < board_size2(b); c++){
+		if (board_at(b, c) != S_OFFBOARD && stats[c].playouts){
+			s += snprintf(s, end - s, "%s %ld %.4f\n",
+							coord2sstr(c, b),
+							stats[c].playouts,
+							stats[c].value);
+		}
+	}
+
+	return reply;
+}
+
 static struct distributed *
 distributed_state_init(char *arg, struct board *b)
 {
@@ -516,6 +548,7 @@ engine_distributed_init(char *arg, struct board *b)
 		"Anyone can send me 'winrate' in private chat to get my assessment of the position.";
 	e->notify = distributed_notify;
 	e->genmove = distributed_genmove;
+	e->move_statistics = move_statistics;
 	e->dead_group_list = distributed_dead_group_list;
 	e->chat = distributed_chat;
 	e->data = dist;

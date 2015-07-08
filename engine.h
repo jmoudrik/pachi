@@ -18,6 +18,7 @@ typedef char *(*engine_chat)(struct engine *e, struct board *b, bool in_game, ch
 typedef coord_t *(*engine_genmove)(struct engine *e, struct board *b, struct time_info *ti, enum stone color, bool pass_all_alive);
 typedef char *(*engine_genmoves)(struct engine *e, struct board *b, struct time_info *ti, enum stone color,
 				 char *args, bool pass_all_alive, void **stats_buf, int *stats_size);
+typedef char *(*engine_move_statistics)(struct engine *e, struct board *b);
 /* Evaluate feasibility of player @color playing at all free moves. Will
  * simulate each move from b->f[i] for time @ti, then set
  * 1-max(opponent_win_likelihood) in vals[i]. */
@@ -47,6 +48,7 @@ struct engine {
 	engine_result result;
 	engine_genmove genmove;
 	engine_genmoves genmoves;
+	engine_move_statistics move_statistics;
 	engine_evaluate evaluate;
 	engine_dead_group_list dead_group_list;
 	engine_stop stop;
