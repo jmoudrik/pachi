@@ -363,7 +363,7 @@ gtp_parse(struct board *board, struct engine *engine, struct time_info *ti, char
 		char *reply = engine->move_statistics(engine, board);
 
 		if (!reply) {
-			gtp_error(id, "move_statistics error", NULL);
+			gtp_error(id, "pachi-move_statistics error", NULL);
 			return P_OK;
 		}
 		gtp_reply(id, reply, NULL);
