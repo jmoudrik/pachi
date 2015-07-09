@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -20,8 +21,9 @@ struct replay {
 
 
 static coord_t *
-replay_genmove(struct engine *e, struct board *b, struct time_info *ti, enum stone color, bool pass_all_alive)
+replay_genmove(struct engine *e, struct board *b, struct time_info *ti, enum stone color, bool pass_all_alive, bool regression)
 {
+	assert(!regression);
 	struct replay *r = e->data;
 	struct playout_setup s; memset(&s, 0, sizeof(s));
 
