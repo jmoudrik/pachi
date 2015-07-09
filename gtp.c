@@ -289,6 +289,7 @@ gtp_parse(struct board *board, struct engine *engine, struct time_info *ti, char
 		}
 
 	} else if (!strcasecmp(cmd, "genmove") || !strcasecmp(cmd, "kgs-genmove_cleanup") || !strcasecmp(cmd, "reg_genmove")) {
+		bool regression = !strcasecmp(cmd, "reg_genmove");
 		char *arg;
 		next_tok(arg);
 		enum stone color = str2stone(arg);
@@ -307,29 +308,35 @@ gtp_parse(struct board *board, struct engine *engine, struct time_info *ti, char
 		if (!is_pass(cf)) {
 			c = coord_copy(cf);
 		} else {
-			c = engine->genmove(engine, board, &ti[color], color, !strcasecmp(cmd, "kgs-genmove_cleanup"), !strcasecmp(cmd, "reg_genmove"));
+			c = engine->genmove(engine, board, &ti[color], color, !strcasecmp(cmd, "kgs-genmove_cleanup"), regression);
 		}
 		struct move m = { *c, color };
 
-        struct board *board2 = board;
-        /* do not actually play the move during regression */
-		if (strcasecmp(cmd, "reg_genmove")) {
-            struct board mock_board;
-            board_copy(&mock_board, board);
-            board2 = &mock_board;
-        }
+		struct board *board2 = board;
+		struct board mock_board;
+		/* do not actually play the move during regression */
+		if (regression) {
+			board_copy(&mock_board, board);
+			board2 = &mock_board;
+		}
 
-        if (board_play(board2, &m) < 0) {
-			fprintf(stderr, "Attempted to generate an illegal move: [%s, %s]\n", coord2sstr(m.coord, board2), stone2str(m.color));
+		if (board_play(board2, &m) < 0) {
+			fprintf(stderr, "%sAttempted to generate an illegal move: [%s, %s]\n",
+					regression ? "Regression: " : "",
+					coord2sstr(m.coord, board2), stone2str(m.color));
 			abort();
 		}
 		char *str = coord2str(*c, board2);
 		if (DEBUGL(4))
-			fprintf(stderr, "playing move %s\n", str);
+			fprintf(stderr, "%splaying move %s\n",
+					regression ? "Regression: " : "",
+					str);
 		if (DEBUGL(1) && debug_boardprint) {
 			board_print_custom(board2, stderr, engine->printhook);
 		}
 		gtp_reply(id, str, NULL);
+		if (regression)
+			board_done_noalloc(&mock_board);
 		free(str); coord_done(c);
 
 		/* Account for spent time. If our GTP peer keeps our clock, this will
