@@ -22,8 +22,10 @@ struct patternplay {
 
 
 static coord_t *
-patternplay_genmove(struct engine *e, struct board *b, struct time_info *ti, enum stone color, bool pass_all_alive)
+patternplay_genmove(struct engine *e, struct board *b, struct time_info *ti, enum stone color, bool pass_all_alive, bool regression)
 {
+	assert(!regression);
+
 	struct patternplay *pp = e->data;
 
 	struct pattern pats[b->flen];

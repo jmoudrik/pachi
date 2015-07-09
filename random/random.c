@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -7,8 +8,10 @@
 #include "random/random.h"
 
 static coord_t *
-random_genmove(struct engine *e, struct board *b, struct time_info *ti, enum stone color, bool pass_all_alive)
+random_genmove(struct engine *e, struct board *b, struct time_info *ti, enum stone color, bool pass_all_alive, bool regression)
 {
+	assert (!regression);
+
 	/* Play a random coordinate. However, we must also guard
 	 * against suicide moves; repeat playing while it's a suicide
 	 * unless we keep suiciding; in that case, we probably don't

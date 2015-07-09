@@ -297,7 +297,7 @@ genmoves_args(char *args, enum stone color, int played,
 /* Regularly send genmoves command to the slaves, and select the best move. */
 static coord_t *
 distributed_genmove(struct engine *e, struct board *b, struct time_info *ti,
-		    enum stone color, bool pass_all_alive)
+		    enum stone color, bool pass_all_alive, bool regression)
 {
 	struct distributed *dist = e->data;
 	double now = time_now();
@@ -378,8 +378,10 @@ distributed_genmove(struct engine *e, struct board *b, struct time_info *ti,
 	clear_receive_queue();
 	char coordbuf[4];
 	char *coord = coord2bstr(coordbuf, best, b);
-	snprintf(args, sizeof(args), "%s %s\n", stone2str(color), coord);
-	update_cmd(b, "play", args, true);
+	if(!regression){
+		snprintf(args, sizeof(args), "%s %s\n", stone2str(color), coord);
+		update_cmd(b, "play", args, true);
+	}
 	protocol_unlock();
 
 	if (DEBUGL(1)) {

@@ -121,7 +121,7 @@ already_have: {
 }
 
 static coord_t *
-joseki_genmove(struct engine *e, struct board *b, struct time_info *ti, enum stone color, bool pass_all_alive)
+joseki_genmove(struct engine *e, struct board *b, struct time_info *ti, enum stone color, bool pass_all_alive, bool regression)
 {
 	fprintf(stderr, "genmove command not available in joseki scan!\n");
 	exit(EXIT_FAILURE);

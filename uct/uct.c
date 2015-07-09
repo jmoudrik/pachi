@@ -481,8 +481,10 @@ uct_genmove_setup(struct uct *u, struct board *b, enum stone color)
 }
 
 static coord_t *
-uct_genmove(struct engine *e, struct board *b, struct time_info *ti, enum stone color, bool pass_all_alive)
+uct_genmove(struct engine *e, struct board *b, struct time_info *ti, enum stone color, bool pass_all_alive, bool regression)
 {
+	assert(!regression);
+
 	double start_time = time_now();
 	struct uct *u = e->data;
 	u->pass_all_alive |= pass_all_alive;

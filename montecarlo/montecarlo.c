@@ -75,8 +75,10 @@ board_stats_print(struct board *board, struct move_stat *moves, FILE *f)
 
 
 static coord_t *
-montecarlo_genmove(struct engine *e, struct board *b, struct time_info *ti, enum stone color, bool pass_all_alive)
+montecarlo_genmove(struct engine *e, struct board *b, struct time_info *ti, enum stone color, bool pass_all_alive, bool regression)
 {
+	assert(!regression);
+
 	struct montecarlo *mc = e->data;
 
 	if (ti->dim == TD_WALLTIME) {

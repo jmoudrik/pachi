@@ -288,7 +288,7 @@ gtp_parse(struct board *board, struct engine *engine, struct time_info *ti, char
 			gtp_reply(id, reply, NULL);
 		}
 
-	} else if (!strcasecmp(cmd, "genmove") || !strcasecmp(cmd, "kgs-genmove_cleanup")) {
+	} else if (!strcasecmp(cmd, "genmove") || !strcasecmp(cmd, "kgs-genmove_cleanup") || !strcasecmp(cmd, "reg_genmove")) {
 		char *arg;
 		next_tok(arg);
 		enum stone color = str2stone(arg);
@@ -307,18 +307,27 @@ gtp_parse(struct board *board, struct engine *engine, struct time_info *ti, char
 		if (!is_pass(cf)) {
 			c = coord_copy(cf);
 		} else {
-			c = engine->genmove(engine, board, &ti[color], color, !strcasecmp(cmd, "kgs-genmove_cleanup"));
+			c = engine->genmove(engine, board, &ti[color], color, !strcasecmp(cmd, "kgs-genmove_cleanup"), !strcasecmp(cmd, "reg_genmove"));
 		}
 		struct move m = { *c, color };
-		if (board_play(board, &m) < 0) {
-			fprintf(stderr, "Attempted to generate an illegal move: [%s, %s]\n", coord2sstr(m.coord, board), stone2str(m.color));
+
+        struct board *board2 = board;
+        /* do not actually play the move during regression */
+		if (strcasecmp(cmd, "reg_genmove")) {
+            struct board mock_board;
+            board_copy(&mock_board, board);
+            board2 = &mock_board;
+        }
+
+        if (board_play(board2, &m) < 0) {
+			fprintf(stderr, "Attempted to generate an illegal move: [%s, %s]\n", coord2sstr(m.coord, board2), stone2str(m.color));
 			abort();
 		}
-		char *str = coord2str(*c, board);
+		char *str = coord2str(*c, board2);
 		if (DEBUGL(4))
 			fprintf(stderr, "playing move %s\n", str);
 		if (DEBUGL(1) && debug_boardprint) {
-			board_print_custom(board, stderr, engine->printhook);
+			board_print_custom(board2, stderr, engine->printhook);
 		}
 		gtp_reply(id, str, NULL);
 		free(str); coord_done(c);

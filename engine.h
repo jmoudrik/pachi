@@ -14,8 +14,9 @@ typedef char *(*engine_result)(struct engine *e, struct board *b);
 typedef char *(*engine_chat)(struct engine *e, struct board *b, bool in_game, char *from, char *cmd);
 /* Generate a move. If pass_all_alive is true, <pass> shall be generated only
  * if all stones on the board can be considered alive, without regard to "dead"
- * considered stones. */
-typedef coord_t *(*engine_genmove)(struct engine *e, struct board *b, struct time_info *ti, enum stone color, bool pass_all_alive);
+ * considered stones. If regression is true, the generated move should not be
+ * actually carried out. */
+typedef coord_t *(*engine_genmove)(struct engine *e, struct board *b, struct time_info *ti, enum stone color, bool pass_all_alive, bool regression);
 typedef char *(*engine_genmoves)(struct engine *e, struct board *b, struct time_info *ti, enum stone color,
 				 char *args, bool pass_all_alive, void **stats_buf, int *stats_size);
 /* Evaluate feasibility of player @color playing at all free moves. Will
