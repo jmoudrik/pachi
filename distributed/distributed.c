@@ -459,12 +459,12 @@ static char *
 move_statistics(struct engine *e, struct board *b){
 	/* For each intersection:
 	 * coordinate, "pass" or "resign") 6B, space 1B,
-	 * playouts (7 decimal places) 7B, space 1B
+	 * playouts (8 decimal places) 7B, space 1B
 	 * probability (4 decimal points) 6B, newline 1B,
 	 *
 	 * At the end:
 	 * 1B trailing zero */
-	static char reply[22 * (2 + BOARD_MAX_SIZE * BOARD_MAX_SIZE) + 1] = {0};
+	static char reply[23 * (2 + BOARD_MAX_SIZE * BOARD_MAX_SIZE) + 1] = {0};
 
 	struct distributed *dist = e->data;
 	struct large_stats *stats = dist->my_last_stats_array + 2;
