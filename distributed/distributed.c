@@ -103,7 +103,7 @@ struct distributed {
 	bool slaves_quit;
 	struct move my_last_move;
 	struct move_stats my_last_stats;
-	struct large_stats my_last_stats_array[2 + BOARD_MAX_SIZE * BOARD_MAX_SIZE];
+	struct large_stats my_last_stats_array[2 + (2 + BOARD_MAX_SIZE) * (2 + BOARD_MAX_SIZE)];
 	int slaves;
 	int threads;
 };
