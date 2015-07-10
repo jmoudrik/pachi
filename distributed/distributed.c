@@ -480,6 +480,11 @@ move_statistics(struct engine *e, struct board *b){
 							stats[c].value);
 		}
 	}
+	if(s > reply){
+		s--;
+		assert(*s == '\n');
+		*s = 0; // GTP response would otw have \n\n\n at the end
+	}
 
 	return reply;
 }
