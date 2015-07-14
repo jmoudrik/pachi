@@ -306,6 +306,19 @@ gtp_parse(struct board *board, struct engine *engine, struct time_info *ti, char
 			cf = fbook_check(board);
 		if (!is_pass(cf)) {
 			c = coord_copy(cf);
+			/* We need to notify slaves about the chosen move.
+			 * XXX: find a better (non-engine specific) way to do this! */
+			if (!strcmp(engine->name,"Distributed")){
+				char tmp[11] = {0}; /* "white B11\n\0" */
+				char *str = coord2str(*c, board);
+				snprintf(tmp, 11, "%s %s\n", stone2str(color), str);
+				free(str);
+
+				char *reply = 0;
+				enum parse_code c = engine->notify(engine, board, id, "play", tmp, &reply);
+				assert(c == P_OK);
+				assert(!reply);
+			}
 		} else {
 			c = engine->genmove(engine, board, &ti[color], color, !strcasecmp(cmd, "kgs-genmove_cleanup"));
 		}
